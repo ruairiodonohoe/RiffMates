@@ -1,5 +1,6 @@
 import json
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 
 
 # Create your views here.
@@ -15,5 +16,14 @@ def about(request):
 
 def version_info(request):
     content = {"version": "1.0"}
-    content = json.dumps(content)
-    return HttpResponse(content, content_type="json")
+    return JsonResponse(content)
+
+
+def news(request):
+    data = {
+        "news": [
+            "RiffMates now has a news page!",
+            "RiffMates has its first web page",
+        ]
+    }
+    return render(request, "news.html", data)
