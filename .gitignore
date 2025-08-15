@@ -1,0 +1,85 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# If using Django migrations
+# **/migrations/*.py
+**/migrations/*.pyc
+!**/migrations/__init__.py
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Poetry
+poetry.lock
+
+# Environment variables
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Test reports
+htmlcov/
+.coverage
+.tox/
+.nox/
+coverage.xml
+*.cover
+.cache
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pytest
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Build files
+build/
+dist/
+*.egg-info/
+
+# Pip wheel
+*.whl
+
+# Local settings
+local_settings.py
+
+
+# docker yml
+docker-compose.yml
+docker-compose-prod.yml
+
+# SSL certificates
+*.crt
+*.key
