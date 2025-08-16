@@ -2,7 +2,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 
 
-from .models import Musician
+from .models import Musician, Band
 
 
 # Create your views here.
@@ -16,7 +16,18 @@ def musician(request, musician_id):
 
 def musicians(request):
     all_musicians = Musician.objects.all().order_by("last_name")
-    paginator = Paginator(all_musicians, 1)
+
+    try:
+        per_page = int(request.GET.get("per_page", 3))
+    except ValueError:
+        per_page = 10
+
+    if per_page < 1:
+        per_page = 1
+    elif per_page > 100:
+        per_page = 100
+
+    paginator = Paginator(all_musicians, per_page)
 
     page_num = request.GET.get("page", 1)
     page_num = int(page_num)
@@ -28,6 +39,36 @@ def musicians(request):
 
     page = paginator.page(page_num)
 
-    data = {"musicians": page.object_list, "page": page}
+    data = {"musicians": page.object_list, "page": page, "per_page": per_page}
 
     return render(request, "musicians.html", data)
+
+
+def bands(request):
+    all_bands = Band.objects.all().order_by("name")
+
+    try:
+        per_page = int(request.GET.get("per_page", 3))
+    except ValueError:
+        per_page = 10
+
+    if per_page < 1:
+        per_page = 1
+    elif per_page > 100:
+        per_page = 100
+
+    paginator = Paginator(all_bands, per_page)
+
+    page_num = request.GET.get("page", 1)
+    page_num = int(page_num)
+
+    if page_num < 1:
+        page_num = 1
+    elif page_num > paginator.num_pages:
+        page_num = paginator.num_pages
+
+    page = paginator.page(page_num)
+
+    data = {"bands": page.object_list, "page": page, "per_page": per_page}
+
+    return render(request, "bands.html", data)
