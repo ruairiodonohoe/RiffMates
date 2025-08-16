@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}{{ block.super }}: Band Details{% endblock title%}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">{{ band.name }}</h2>
+            </div>
+        </div>
+    </div>
+    <div>
+        <ul>
+            {% for musician in band.musicians.all %}
+                <li>{{ musician.first_name }} {{ musician.last_name }}</li>
+            {% empty %}
+                No musicians in this band.
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% endblock content %}

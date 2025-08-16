@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ block.super }}: Venues{% endblock title%}
+
+{% block content %}
+    <h1>Venues</h1>
+    <ul>
+        {% for venue in venues %}
+            <h3>{{ venue.name }}</h3>
+            <h4>Rooms: </h2>
+            <ul>
+                {% for room in venue.room_set.all %}
+                    <li>{{ room.name }}</li>
+                {% empty %}
+                    No rooms in this venue.
+                {% endfor %}
+            </ul>
+        {% empty %}
+            No venues in the database.
+        {% endfor %}
+    </ul>
+{% endblock content %}

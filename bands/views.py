@@ -2,7 +2,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 
 
-from .models import Musician, Band
+from .models import Musician, Band, Venue
 
 
 # Create your views here.
@@ -20,7 +20,7 @@ def musicians(request):
     try:
         per_page = int(request.GET.get("per_page", 3))
     except ValueError:
-        per_page = 10
+        per_page = 3
 
     if per_page < 1:
         per_page = 1
@@ -45,12 +45,12 @@ def musicians(request):
 
 
 def bands(request):
-    all_bands = Band.objects.all().order_by("name")
+    all_bands = Band.objects.all()
 
     try:
         per_page = int(request.GET.get("per_page", 3))
     except ValueError:
-        per_page = 10
+        per_page = 3
 
     if per_page < 1:
         per_page = 1
@@ -58,10 +58,7 @@ def bands(request):
         per_page = 100
 
     paginator = Paginator(all_bands, per_page)
-
     page_num = request.GET.get("page", 1)
-    page_num = int(page_num)
-
     if page_num < 1:
         page_num = 1
     elif page_num > paginator.num_pages:
@@ -72,3 +69,19 @@ def bands(request):
     data = {"bands": page.object_list, "page": page, "per_page": per_page}
 
     return render(request, "bands.html", data)
+
+
+def band(request, band_id):
+    band = get_object_or_404(Band, id=band_id)
+
+    data = {"band": band}
+
+    return render(request, "band.html", data)
+
+
+def venues(request):
+    all_venues = Venue.objects.all()
+
+    data = {"venues": all_venues}
+
+    return render(request, "venues.html", data)
