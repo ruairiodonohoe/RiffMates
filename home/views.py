@@ -1,6 +1,7 @@
 import json
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from datetime import datetime
 
 
 # Create your views here.
@@ -26,4 +27,14 @@ def news(request):
             "RiffMates has its first web page",
         ]
     }
-    return render(request, "news.html", data)
+    return render(request, "news2.html", data)
+
+
+def news_advanced(request):
+    data = {
+        "news": [
+            (datetime(2025, 8, 15), "RiffMates now has a news page!"),
+            (datetime(2025, 8, 14), "RiffMates has its first web page!"),
+        ]
+    }
+    return render(request, "news_adv.html", data)

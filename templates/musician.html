@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ block.super }}: Musician Details{% endblock title %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">{{ musician.first_name }} {{ musician.last_name }}</h2>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Birth Date:</strong> {{ musician.birth }}</p>
+                <!-- You can add more fields here if needed -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %} 
