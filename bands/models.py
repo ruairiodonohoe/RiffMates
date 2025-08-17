@@ -11,6 +11,9 @@ class Musician(models.Model):
     def __str__(self):
         return f"Musician(id={self.id}, last_name={self.last_name})"
 
+    class Meta:
+        ordering = ["last_name", "first_name"]
+
 
 class Venue(models.Model):
     name = models.CharField(max_length=20)
@@ -25,6 +28,9 @@ class Room(models.Model):
 
     def __str__(self):
         return f"Room (id={self.id}, name={self.name})"
+
+    class Meta:
+        unique_together = [["name", "venue"]]
 
 
 class Band(models.Model):
