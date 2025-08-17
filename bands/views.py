@@ -1,8 +1,14 @@
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
+from django.contrib.auth.models import User
+from django.contrib.auth.signals import user_login_failed
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.http import Http404
 from django.shortcuts import render, get_object_or_404
 
 
-from .models import Musician, Band, Venue
+from .models import Musician, Band, Venue, UserProfile
 
 
 # Create your views here.
@@ -85,3 +91,71 @@ def venues(request):
     data = {"venues": all_venues}
 
     return render(request, "venues.html", data)
+
+
+def has_venue(user):
+    try:
+        return user.userprofile.venues.exist()
+    except UserProfile.DoesNotExist:
+        return False
+
+
+@user_passes_test(has_venue)
+def venues_restricted(request):
+    return venues(request)
+
+
+@login_required
+def restricted_page(request):
+    data = {"title": "Restricted Page", "content": "<h1>You are logged in </h1>"}
+    return render(request, "general.html", data)
+
+
+@login_required
+def musician_restricted(request, musician_id):
+    musician = get_object_or_404(Musician, id=musician_id)
+    profile = request.user.userprofile
+    allowed = False
+
+    if profile.musician_profiles.filter(id=musician_id).exists():
+        allowed = True
+    else:
+        musician_profiles = set(profile.musician_profiles.all())
+        for band in musician.band_set.all():
+            band_musicians = set(band.musicians.all())
+            if musician_profiles.intersection(band_musicians):
+                allowed = True
+                break
+
+    if not allowed:
+        raise Http404("Permission denied")
+
+    content = f"""
+        <h1>Musician Page: {musician.last_name}</h1>
+    """
+
+    data = {"title": "Musician Restricted", "content": content}
+
+    return render(request, "general.html", data)
+
+
+@receiver(post_save, sender=User)
+def user_post_save(sender, **kwargs):
+    # Create UserProfile object if User object is new
+    # and not loaded from fixture
+    if kwargs["created"] and not kwargs["raw"]:
+        user = kwargs["instance"]
+        try:
+            # Double check UserProfile doesn't exist already
+            # (admin might create it before the signal fires)
+            UserProfile.objects.get(user=user)
+        except UserProfile.DoesNotExist:
+            # No UserProfile exists for this user, create one
+            UserProfile.objects.create(user=user)
+
+
+@receiver(user_login_failed)
+def login_failed_callback(sender, credentials, request, **kwargs):
+    username = credentials.get("username", "<unknown>")
+    path = request.path if request else "<no request>"
+    print(f"Login failed for username '{username}' at path '{path}'")

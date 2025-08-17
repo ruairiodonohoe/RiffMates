@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -21,6 +22,9 @@ class Venue(models.Model):
     def __str__(self):
         return f"Venue (id={self.id}, name={self.name})"
 
+    class Meta:
+        ordering = ["name"]
+
 
 class Room(models.Model):
     name = models.CharField(max_length=20)
@@ -31,6 +35,7 @@ class Room(models.Model):
 
     class Meta:
         unique_together = [["name", "venue"]]
+        ordering = ["name"]
 
 
 class Band(models.Model):
@@ -39,3 +44,12 @@ class Band(models.Model):
 
     def __str__(self):
         return f"Band (id={self.id}, name={self.name})"
+
+    class Meta:
+        ordering = ["name"]
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    musician_profiles = models.ManyToManyField(Musician, blank=True)
+    venues_controlled = models.ManyToManyField(Venue, blank=True)

@@ -1,13 +1,30 @@
 from datetime import datetime, date
 
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
 from django.utils.html import format_html
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 
-from bands.models import Musician, Band
+from bands.models import Musician, Band, Venue, Room, UserProfile
 
 
 # Register your models here.
+
+admin.site.unregister(User)
+
+
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+
+
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    inlines = [UserProfileInline]
+
+
 class DecadeListFilter(admin.SimpleListFilter):
     title = "decade_born"
     parameter_name = "decade"
@@ -72,6 +89,41 @@ class MusicianAdmin(admin.ModelAdmin):
     show_bands.short_description = "Bands"
 
 
+@admin.register(Room)
+class RoomAdmin(admin.ModelAdmin):
+    list_display = ("name", "show_venue")
+    search_fields = ("name",)
+
+    def show_venue(self, obj):
+        venue = obj.venue
+        param = str(venue.id)
+        url = reverse("admin:bands_venue_changelist") + param
+        return format_html("<a href='{}'>{}</a>", url, venue.name)
+
+    show_venue.short_description = "Venue"
+
+
 @admin.register(Band)
 class BandAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("name", "show_members")
+    search_fields = ("name",)
+
+    def show_members(self, obj):
+        members = obj.musicians.all()
+        if not members:
+            return format_html("<i>None</i>")
+
+        links = []
+        for member in members:
+            url = reverse("admin:bands_musician_changelist") + f"?id={member.id}"
+            member_name = f"{member.first_name} {member.last_name}"
+            link = f"<a href='{url}'>{member_name}</a>"
+            links.append(link)
+
+        return format_html(", ".join(links))
+
+
+@admin.register(Venue)
+class VenueAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
