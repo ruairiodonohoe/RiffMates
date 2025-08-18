@@ -14,4 +14,6 @@ urlpatterns = [
         views.musician_restricted,
         name="musician_restricted",
     ),
+    path("add-venue/", views.edit_venue, name="edit_venue"),
+    path("edit-venue/<int:venue_id>", views.edit_venue, name="edit_venue"),
 ]

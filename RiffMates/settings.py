@@ -66,6 +66,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+            # "builtins": ["django.templatetags.static"],
         },
     },
 ]
@@ -118,7 +119,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATICFILES_DIRS = (BASE_DIR / "static",)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -126,8 +128,15 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-LOGIN_REDIRECT_URL = "/bands/bands/"
-LOGOUT_REDIRECT_URL = "/bands/bands/"
+# LOGIN/OUT PAGES
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
 
 
+# EMAIL CONFIG
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+# MEDIA CONFIG
+MEDIA_ROOT = BASE_DIR.parent / "outside/RiffMates/uploads"
+MEDIA_URL = "/media/"

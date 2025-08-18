@@ -14,6 +14,7 @@
 </head>
 <body class="bg-light">
     <div class="container mt-3 d-flex justify-content-end">
+        <a href="{% url 'home' %}">Home</a>&nbsp;&nbsp;
         {% if user.is_authenticated %}
             Hello, {{ user.username }}! &nbsp;
 

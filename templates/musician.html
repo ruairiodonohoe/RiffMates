@@ -11,6 +11,14 @@
             </div>
             <div class="card-body">
                 <p class="mb-2"><strong>Birth Date:</strong> {{ musician.birth }}</p>
+                
+                {% if musician.description %}
+                    <p class="mb-2"><strong>Description</strong> {{ musician.description }}</p>
+                {% endif %}
+
+                {% if musician.picture %}
+                    <img src="{{ musician.picture.url }}" height="50"/>
+                {% endif %}
                 <!-- You can add more fields here if needed -->
             </div>
         </div>
