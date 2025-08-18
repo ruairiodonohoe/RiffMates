@@ -28,4 +28,5 @@ urlpatterns = [
     path("news/", home_views.news, name="news"),
     path("news-adv", home_views.news_advanced, name="news_advanced"),
     path("bands/", include("bands.urls")),
+    path("content/", include("content.urls")),
 ]

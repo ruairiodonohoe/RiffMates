@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # LOCAL,
     "home",
     "bands",
+    "content",
 ]
 
 MIDDLEWARE = [
