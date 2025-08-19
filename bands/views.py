@@ -1,83 +1,134 @@
+# RiffMates/bands/views.py
+from datetime import date
+
+from bands.forms import MusicianForm, VenueForm
+from bands.models import Band, Musician, Venue
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
-from django.contrib.auth.models import User
-from django.contrib.auth.signals import user_login_failed
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.http import Http404
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 
 
-from bands.models import Musician, Band, Venue, UserProfile, Room
-from bands.forms import VenueForm, MusicianForm
+def musician(request, musician_id):
+    musician = get_object_or_404(Musician, id=musician_id)
+    musician.controller = False
+    if request.user.is_staff:
+        musician.controller = True
+    elif hasattr(request.user, "userprofile"):
+        # This view can be used by people who aren't logged in,
+        # those users don't have a profile, need to validate
+        # one exists before using it
+        profile = request.user.userprofile
+        musician.controller = profile.musician_profiles.filter(id=musician_id).exists()
+
+    data = {
+        "musician": musician,
+    }
+
+    return render(request, "musician.html", data)
 
 
-# Create your views here.
+def edit_musician(request, musician_id=0):
+    if musician_id != 0:
+        musician = get_object_or_404(Musician, id=musician_id)
+        if (
+            not request.user.is_staff
+            and not request.user.userprofile.musician_profiles.filter(
+                id=musician_id
+            ).exists()
+        ):
+            raise Http404("Can only edit controlled musicians")
+
+    if request.method == "GET":
+        if musician_id == 0:
+            form = MusicianForm()
+        else:
+            form = MusicianForm(instance=musician)
+
+    else:  # POST
+        if musician_id == 0:
+            musician = Musician.objects.create(birth=date(1900, 1, 1))
+
+        form = MusicianForm(request.POST, request.FILES, instance=musician)
+
+        if form.is_valid():
+            musician = form.save()
+
+            # Add the musician to the user's profile if this isn't staff
+            if not request.user.is_staff:
+                request.user.userprofile.musician_profiles.add(musician)
+
+            return redirect("musicians")
+
+    # Was a GET, or Form was not valid
+    data = {
+        "form": form,
+    }
+
+    return render(request, "edit_musician.html", data)
+
+
+def _get_items_per_page(request):
+    # Determine how many items to show per page, disallowing <1 or >50
+    items_per_page = int(request.GET.get("items_per_page", 10))
+    if items_per_page < 1:
+        items_per_page = 10
+    if items_per_page > 50:
+        items_per_page = 50
+
+    return items_per_page
+
+
+def _get_page_num(request, paginator):
+    # Get current page number for Pagination, using reasonable defaults
+    page_num = int(request.GET.get("page", 1))
+
+    if page_num < 1:
+        page_num = 1
+    elif page_num > paginator.num_pages:
+        page_num = paginator.num_pages
+
+    return page_num
 
 
 def musicians(request):
     all_musicians = Musician.objects.all().order_by("last_name")
-
-    try:
-        per_page = int(request.GET.get("per_page", 3))
-    except ValueError:
-        per_page = 3
-
-    if per_page < 1:
-        per_page = 1
-    elif per_page > 100:
-        per_page = 100
-
-    paginator = Paginator(all_musicians, per_page)
-
-    page_num = request.GET.get("page", 1)
-    page_num = int(page_num)
-
-    if page_num < 1:
-        page_num = 1
-    elif page_num > paginator.num_pages:
-        page_num = paginator.num_pages
-
+    items_per_page = _get_items_per_page(request)
+    paginator = Paginator(all_musicians, items_per_page)
+    page_num = _get_page_num(request, paginator)
     page = paginator.page(page_num)
 
-    data = {"musicians": page.object_list, "page": page, "per_page": per_page}
+    data = {
+        "musicians": page.object_list,
+        "page": page,
+    }
 
     return render(request, "musicians.html", data)
 
 
+def band(request, band_id):
+    data = {
+        "band": get_object_or_404(Band, id=band_id),
+    }
+
+    return render(request, "band.html", data)
+
+
 def bands(request):
-    all_bands = Band.objects.all()
+    all_bands = Band.objects.all().order_by("name")
+    items_per_page = _get_items_per_page(request)
+    paginator = Paginator(all_bands, items_per_page)
 
-    try:
-        per_page = int(request.GET.get("per_page", 3))
-    except ValueError:
-        per_page = 3
-
-    if per_page < 1:
-        per_page = 1
-    elif per_page > 100:
-        per_page = 100
-
-    paginator = Paginator(all_bands, per_page)
-    page_num = request.GET.get("page", 1)
-    if page_num < 1:
-        page_num = 1
-    elif page_num > paginator.num_pages:
-        page_num = paginator.num_pages
+    page_num = _get_page_num(request, paginator)
 
     page = paginator.page(page_num)
 
-    data = {"bands": page.object_list, "page": page, "per_page": per_page}
+    data = {
+        "bands": page.object_list,
+        "page": page,
+    }
 
     return render(request, "bands.html", data)
-
-
-def band(request, band_id):
-    band = get_object_or_404(Band, id=band_id)
-
-    data = {"band": band}
-
-    return render(request, "band.html", data)
 
 
 def venues(request):
@@ -85,33 +136,36 @@ def venues(request):
     profile = getattr(request.user, "userprofile", None)
     if profile:
         for venue in all_venues:
-            profile = request.user.userprofile
+            # Mark the venue as "controlled" if the logged in user is
+            # associated with the venue
             venue.controlled = profile.venues_controlled.filter(id=venue.id).exists()
     else:
-        # Anonymous user
+        # Anonymous user, can't be associated with the venue
         for venue in all_venues:
             venue.controlled = False
 
-    data = {"venues": all_venues}
+    items_per_page = _get_items_per_page(request)
+    paginator = Paginator(all_venues, items_per_page)
+
+    page_num = _get_page_num(request, paginator)
+
+    page = paginator.page(page_num)
+
+    data = {
+        "venues": page.object_list,
+        "page": page,
+    }
 
     return render(request, "venues.html", data)
 
 
-def has_venue(user):
-    try:
-        return user.userprofile.venues.exist()
-    except UserProfile.DoesNotExist:
-        return False
-
-
-@user_passes_test(has_venue)
-def venues_restricted(request):
-    return venues(request)
-
-
 @login_required
 def restricted_page(request):
-    data = {"title": "Restricted Page", "content": "<h1>You are logged in </h1>"}
+    data = {
+        "title": "Restricted Page",
+        "content": "<h1>You are logged in</h1>",
+    }
+
     return render(request, "general.html", data)
 
 
@@ -124,6 +178,7 @@ def musician_restricted(request, musician_id):
     if profile.musician_profiles.filter(id=musician_id).exists():
         allowed = True
     else:
+        # User is not this musician, check if they're a band-mate
         musician_profiles = set(profile.musician_profiles.all())
         for band in musician.band_set.all():
             band_musicians = set(band.musicians.all())
@@ -137,106 +192,55 @@ def musician_restricted(request, musician_id):
     content = f"""
         <h1>Musician Page: {musician.last_name}</h1>
     """
-
-    data = {"title": "Musician Restricted", "content": content}
+    data = {
+        "title": "Musician Restricted",
+        "content": content,
+    }
 
     return render(request, "general.html", data)
 
 
-@receiver(post_save, sender=User)
-def user_post_save(sender, **kwargs):
-    # Create UserProfile object if User object is new
-    # and not loaded from fixture
-    if kwargs["created"] and not kwargs["raw"]:
-        user = kwargs["instance"]
-        try:
-            # Double check UserProfile doesn't exist already
-            # (admin might create it before the signal fires)
-            UserProfile.objects.get(user=user)
-        except UserProfile.DoesNotExist:
-            # No UserProfile exists for this user, create one
-            UserProfile.objects.create(user=user)
+def has_venue(user):
+    try:
+        return user.userprofile.venues_controlled.count() > 0
+    except AttributeError:
+        return False
 
 
-@receiver(user_login_failed)
-def login_failed_callback(sender, credentials, request, **kwargs):
-    username = credentials.get("username", "<unknown>")
-    path = request.path if request else "<no request>"
-    print(f"Login failed for username '{username}' at path '{path}'")
+@user_passes_test(has_venue)
+def venues_restricted(request):
+    return venues(request)
 
 
 @login_required
 def edit_venue(request, venue_id=0):
-    venue = None
-    # If venue_id != 0, then we are editing an existing venue
     if venue_id != 0:
-        # fetch object
         venue = get_object_or_404(Venue, id=venue_id)
-        # Check user controls venue
         if not request.user.userprofile.venues_controlled.filter(id=venue_id).exists():
             raise Http404("Can only edit controlled venues")
 
-    if request.method == "POST":
+    if request.method == "GET":
+        if venue_id == 0:
+            form = VenueForm()
+        else:
+            form = VenueForm(instance=venue)
+
+    else:  # POST
+        if venue_id == 0:
+            venue = Venue.objects.create()
+
         form = VenueForm(request.POST, request.FILES, instance=venue)
+
         if form.is_valid():
             venue = form.save()
-            if venue_id == 0:
-                request.user.userprofile.venues_controlled.add(venue)
+
+            # Add the venue to the user's profile
+            request.user.userprofile.venues_controlled.add(venue)
             return redirect("venues")
-    else:
-        form = VenueForm(instance=venue)
 
-    data = {"form": form}
+    # Was a GET, or Form was not valid
+    data = {
+        "form": form,
+    }
+
     return render(request, "edit_venue.html", data)
-
-
-def musician(request, musician_id):
-    musician = get_object_or_404(Musician, id=musician_id)
-    user = request.user
-    can_edit = False
-
-    if user.is_authenticated:
-        profile = getattr(user, "userprofile", None)
-        if profile:
-            if profile.musician_profiles.filter(id=musician_id).exists():
-                can_edit = True
-        if user.is_staff:
-            can_edit = True
-
-    data = {"musician": musician, "can_edit": can_edit}
-
-    return render(request, "musician.html", data)
-
-
-@login_required
-def edit_musician(request, musician_id=0):
-    musician = None
-    user = request.user
-
-    # If musician_id != 0, then editting already existing musician
-    if musician_id != 0:
-        # Get object
-        musician = get_object_or_404(Musician, id=musician_id)
-        profile = getattr(user, "userprofile", None)
-
-        # Raise error if user is not staff, or if not owner of musician profile.
-        if not (
-            user.is_staff
-            or (profile and profile.musician_profiles.filter(id=musician_id).exists())
-        ):
-            raise Http404("You do not have permission to edit this musician.")
-
-    # Handle form POST
-    if request.method == "POST":
-        form = MusicianForm(request.POST, request.FILES, instance=musician)
-        if form.is_valid():
-            musician = form.save()
-            # if new musician, add to user profile
-            if musician_id == 0 and hasattr(user, "userprofile"):
-                user.userprofile.musician_profiles.add(musician)
-            return redirect("musician", musician_id=musician.id)
-    else:
-        form = MusicianForm(instance=musician)
-
-    data = {"form": form}
-    return render(request, "edit_musician.html", data)
