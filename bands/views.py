@@ -9,16 +9,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 
 from bands.models import Musician, Band, Venue, UserProfile, Room
-from bands.forms import VenueForm
+from bands.forms import VenueForm, MusicianForm
 
 
 # Create your views here.
-def musician(request, musician_id):
-    musician = get_object_or_404(Musician, id=musician_id)
-
-    data = {"musician": musician}
-
-    return render(request, "musician.html", data)
 
 
 def musicians(request):
@@ -173,26 +167,76 @@ def login_failed_callback(sender, credentials, request, **kwargs):
 
 @login_required
 def edit_venue(request, venue_id=0):
+    venue = None
+    # If venue_id != 0, then we are editing an existing venue
     if venue_id != 0:
+        # fetch object
         venue = get_object_or_404(Venue, id=venue_id)
+        # Check user controls venue
         if not request.user.userprofile.venues_controlled.filter(id=venue_id).exists():
             raise Http404("Can only edit controlled venues")
 
-    if request.method == "GET":
-        if venue_id == 0:
-            form = VenueForm()
-        else:
-            form = VenueForm(instance=venue)
-
-    else:
-        if venue_id == 0:
-            venue = Venue.objects.create()
-
+    if request.method == "POST":
         form = VenueForm(request.POST, request.FILES, instance=venue)
         if form.is_valid():
             venue = form.save()
-            request.user.userprofile.venues_controlled.add(venue)
+            if venue_id == 0:
+                request.user.userprofile.venues_controlled.add(venue)
             return redirect("venues")
+    else:
+        form = VenueForm(instance=venue)
 
     data = {"form": form}
     return render(request, "edit_venue.html", data)
+
+
+def musician(request, musician_id):
+    musician = get_object_or_404(Musician, id=musician_id)
+    user = request.user
+    can_edit = False
+
+    if user.is_authenticated:
+        profile = getattr(user, "userprofile", None)
+        if profile:
+            if profile.musician_profiles.filter(id=musician_id).exists():
+                can_edit = True
+        if user.is_staff:
+            can_edit = True
+
+    data = {"musician": musician, "can_edit": can_edit}
+
+    return render(request, "musician.html", data)
+
+
+@login_required
+def edit_musician(request, musician_id=0):
+    musician = None
+    user = request.user
+
+    # If musician_id != 0, then editting already existing musician
+    if musician_id != 0:
+        # Get object
+        musician = get_object_or_404(Musician, id=musician_id)
+        profile = getattr(user, "userprofile", None)
+
+        # Raise error if user is not staff, or if not owner of musician profile.
+        if not (
+            user.is_staff
+            or (profile and profile.musician_profiles.filter(id=musician_id).exists())
+        ):
+            raise Http404("You do not have permission to edit this musician.")
+
+    # Handle form POST
+    if request.method == "POST":
+        form = MusicianForm(request.POST, request.FILES, instance=musician)
+        if form.is_valid():
+            musician = form.save()
+            # if new musician, add to user profile
+            if musician_id == 0 and hasattr(user, "userprofile"):
+                user.userprofile.musician_profiles.add(musician)
+            return redirect("musician", musician_id=musician.id)
+    else:
+        form = MusicianForm(instance=musician)
+
+    data = {"form": form}
+    return render(request, "edit_musician.html", data)

@@ -64,26 +64,29 @@ def list_ads(request):
 
 @login_required
 def seeking_ad(request, ad_id=0):
-    if request.method == "GET":
-        if ad_id == 0:
-            form = SeekingAdForm()
-        else:
-            ad = get_object_or_404(SeekingAd, id=ad_id, owner=request.user)
-            form = SeekingAdForm(instance=ad)
+    ad = None
 
-    else:
-        if ad_id == 0:
-            form = SeekingAdForm(request.POST)
-        else:
-            ad = get_object_or_404(SeekingAd, id=ad_id, owner=request.user)
-            form = SeekingAdForm(request.POST, instance=ad)
+    if ad_id != 0:
+        ad = get_object_or_404(SeekingAd, id=ad_id)
+        can_edit = (
+            request.user.is_staff
+            or request.user.is_superuser
+            or ad.owner == request.user
+        )
+        if not can_edit:
+            return redirect("list_ads")
 
+    if request.method == "POST":
+        form = SeekingAdForm(request.POST, instance=ad, user=request.user)
         if form.is_valid():
             ad = form.save(commit=False)
-            ad.owner = request.user
+            if ad_id == 0:
+                ad.owner = request.user
             ad.save()
-
             return redirect("list_ads")
+
+    else:
+        form = SeekingAdForm(instance=ad, user=request.user)
 
     data = {"form": form}
 

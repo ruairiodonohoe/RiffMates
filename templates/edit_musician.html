@@ -1,12 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Seeking Ad</h1>
-
+    <h1>Musician Details</h1>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
         <button class="btn btn-dark" type="submit">Save</button>
     </form>
-
 {% endblock content %}

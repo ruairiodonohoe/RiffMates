@@ -17,7 +17,6 @@
         <a href="{% url 'home' %}">Home</a>&nbsp;&nbsp;
         {% if user.is_authenticated %}
             Hello, {{ user.username }}! &nbsp;
-
             <form id="logout-form" method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button type="submit" style="background: none; border:none; cursor:pointer; padding:0; text-decoration: underline;">
