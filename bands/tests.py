@@ -6,6 +6,8 @@ from base64 import b64decode
 from datetime import date
 
 from bands.models import Musician, Venue
+
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -218,3 +220,22 @@ class TestMusiciansCommand(TestCase):
         output = io.StringIO()
         call_command("musicians", stdout=output)
         self.assertIn("First", output.getvalue())
+
+
+class APITests(TestCase):
+    def test_venue_api(self):
+        headers = {
+            "X-API-KEY": settings.NINJA_API_KEY,
+        }
+
+        data = {"name": "some venue name", "description": "some venue description"}
+
+        response = self.client.post(
+            "/api/v1/bands/venue",
+            data,
+            content_type="application/json",
+            headers=headers,
+        )
+
+        self.assertEqual(response.name, "some venue name")
+        self.assertEqual(response.description, "some venue description")

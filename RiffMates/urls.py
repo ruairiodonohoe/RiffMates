@@ -20,12 +20,24 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
+from ninja import NinjaAPI
+
+from home.api import router as home_router
+from promoters.api import router as promoters_router
+from bands.api import router as bands_router
+
+api = NinjaAPI(version="1.0")
+api.add_router("/home/", home_router)
+api.add_router("/promoters/", promoters_router)
+api.add_router("/bands/", bands_router)
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
     path("", include("home.urls")),
     path("bands/", include("bands.urls")),
     path("content/", include("content.urls")),
+    path("api/v1/", api.urls),
 ]
 
 if settings.DEBUG:

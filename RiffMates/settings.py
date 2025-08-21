@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -141,3 +143,7 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # MEDIA CONFIG
 MEDIA_ROOT = BASE_DIR.parent / "outside/RiffMates/uploads"
 MEDIA_URL = "/media/"
+
+
+# API CONFIG
+NINJA_API_KEY = config("NINJA_API_KEY")
