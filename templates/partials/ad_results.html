@@ -1,0 +1,22 @@
+<ul>
+    {% for ad in ads %}
+        <li>
+            <a href="{% url 'seeking_ad' %}">{{ ad.id }}</a>
+            <span style="text-decoration: none;">- ({{ ad.date }}):</span>
+            {{ ad.content }}
+        </li>
+    {% empty %}
+        <li><i>No matching ads</i></li>
+    {% endfor %}
+
+</ul>
+
+{% if has_more %}
+    <div
+        hx-get="{% url 'search_ads' %}?page={{ next_page }}&search_text={{ search_text }}"
+        hx-trigger="revealed"
+        hx-swap="outerHTML"
+    >
+        <i>Loading...</i>
+    </div>
+{% endif %}

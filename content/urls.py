@@ -9,4 +9,5 @@ urlpatterns = [
     path("list-ads/", views.list_ads, name="list_ads"),
     path("seeking-ad/", views.seeking_ad, name="seeking_ad"),
     path("edit-seeking-ad/<int:ad_id>", views.seeking_ad, name="edit_seeking_ad"),
+    path("search-ads/", views.search_ads, name="search_ads"),
 ]

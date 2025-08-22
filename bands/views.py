@@ -285,6 +285,8 @@ def search_musicians(request):
     return render(request, "search_musicians.html", data)
 
 
+
+
 @login_required
 def room_editor(request, venue_id):
     venue = get_object_or_404(Venue, id=venue_id, userprofile=request.user.userprofile)

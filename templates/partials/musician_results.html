@@ -1,7 +1,9 @@
 <ul>
     {% for musician in musicians %}
         <li>
-            <a href="{% url 'musician' musician.id%}">{{ musician.first_name }} {{ musician.last_name}}</a>
+            <a href="{% url 'musician' musician.id%}">
+              {{ musician.last_name}}, {{ musician.first_name }}
+            </a>
         </li>
     {% empty %}
         <li><i>No matching musicians</i></li>
