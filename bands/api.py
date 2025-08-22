@@ -77,6 +77,12 @@ class VenueFilter(FilterSchema):
     name: Optional[str] = Field(None, q=["name__istartswith"])
 
 
+class MusicianIn(ModelSchema):
+    class Meta:
+        model = Musician
+        fields = ["first_name", "last_name", "birth", "description"]
+
+
 class BandFilter(FilterSchema):
     name: Optional[str] = Field(None, q=["name__istartswith"])
 
@@ -107,6 +113,15 @@ def update_venue(request, venue_id, payload: VenueIn):
         setattr(venue, key, val)
     venue.save()
     return venue
+
+
+@router.put("/musician/{musician_id}/", response=MusicianSchema, auth=api_key)
+def update_musician(request, musician_id, payload: MusicianIn):
+    musician = get_object_or_404(Musician, id=musician_id)
+    for key, val in payload.dict().items():
+        setattr(musician, key, val)
+    musician.save()
+    return musician
 
 
 @router.delete("/venue/{venue_id}/", auth=api_key)

@@ -38,6 +38,7 @@ urlpatterns = [
     path("bands/", include("bands.urls")),
     path("content/", include("content.urls")),
     path("api/v1/", api.urls),
+    path("promoters/", include("promoters.urls")),
 ]
 
 if settings.DEBUG:

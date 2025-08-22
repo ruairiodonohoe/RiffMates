@@ -1,0 +1,17 @@
+<ul>
+    {% for promoter in promoters %}
+        <li>
+            {{ promoter.full_name }}
+            {% if promoter.birth %}
+                (
+                    {{ promoter.birth }} - 
+                    {% if promoter.death %}
+                        {{ promoter.death }}
+                    {% endif %}
+                )
+            {% endif %}
+        </li>
+    {% empty %}
+        <li><i>No promoters in the database</i></li>
+    {% endfor %}
+</ul>
