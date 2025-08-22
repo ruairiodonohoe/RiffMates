@@ -1,8 +1,11 @@
 # RiffMates/bands/views.py
 from datetime import date
-
-from bands.forms import MusicianForm, VenueForm
-from bands.models import Band, Musician, Venue
+import urllib
+from time import sleep
+from bands.forms import MusicianForm, VenueForm, RoomForm
+from bands.models import Band, Musician, Venue, Room
+from django.http import HttpResponse
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 from django.http import Http404
@@ -244,3 +247,99 @@ def edit_venue(request, venue_id=0):
     }
 
     return render(request, "edit_venue.html", data)
+
+
+def search_musicians(request):
+    search_text = request.GET.get("search_text", "")
+    search_text = urllib.parse.unquote(search_text)
+    search_text = search_text.strip()
+
+    musicians = []
+
+    if search_text:
+        parts = search_text.split()
+
+        q = Q(first_name__istartswith=parts[0]) | Q(last_name__istartswith=parts[0])
+        for part in parts[1:]:
+            q |= Q(first_name__istartswith=part) | Q(last_name__istartswith=part)
+
+        musicians = Musician.objects.filter(q)
+
+    items_per_page = _get_items_per_page(request)
+    paginator = Paginator(musicians, items_per_page)
+    page_num = _get_page_num(request, paginator)
+    page = paginator.page(page_num)
+
+    data = {
+        "search_text": search_text,
+        "musicians": page.object_list,
+        "has_more": page.has_next(),
+        "next_page": page_num + 1,
+    }
+
+    if request.htmx:
+        if page_num > 1:
+            sleep(2)
+        return render(request, "partials/musician_results.html", data)
+
+    return render(request, "search_musicians.html", data)
+
+
+@login_required
+def room_editor(request, venue_id):
+    venue = get_object_or_404(Venue, id=venue_id, userprofile=request.user.userprofile)
+    data = {"venue": venue}
+
+    return render(request, "room_editor.html", data)
+
+
+@login_required
+def edit_room_form(request, room_id):
+    room = None
+
+    if room_id != 0:
+        room = get_object_or_404(
+            Room, id=room_id, venue__userprofile=request.user.userprofile
+        )
+
+    if request.method == "POST":
+        form = RoomForm(request.POST, instance=room)
+        if form.is_valid():
+            new_room = form.save(commit=False)
+            if room_id == 0:
+                venue = request.user.userprofile.venues_controlled.first()
+                if not venue:
+                    return HttpResponse("No venue available", status=400)
+                new_room.venue = venue
+            new_room.save()
+
+            data = {"room": new_room}
+            return render(request, "partials/show_room.html", data)
+    else:
+        form = RoomForm(instance=room)
+
+    data = {"room": room, "form": form}
+
+    return render(request, "partials/edit_room_form.html", data)
+
+
+@login_required
+def show_room_partial(request, room_id):
+    room = get_object_or_404(
+        Room, id=room.id, venue__userprofile=request.usert.userprofile
+    )
+
+    data = {"room": room}
+
+    return render(request, "partials/show_room.html", data)
+
+
+@login_required
+def delete_room(request, room_id):
+    room = get_object_or_404(Room, id=room_id)
+
+    if request.method == "DELETE":
+        room.delete()
+        return HttpResponse("")
+
+    return HttpResponse("Method not allowed", status=405)

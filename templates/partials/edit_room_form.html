@@ -1,0 +1,54 @@
+{% comment %}
+<li id="room-row-{{ room.id }}">
+    <form>
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button
+            hx-post="{% url 'edit_room_form' room.id %}"
+            hx-target="#room-row-{{ room.id }}"
+            >Save</button>
+        <button
+            hx-get="{% url 'show_room_partial' room.id %}"
+            hx-target="#room-row-{{ room.id }}"
+            >Cancel</button>
+    </form>
+</li>
+{% endcomment %}
+
+{% comment %}
+<li id="room-row-{% if room %}{{ room.id }}{% else %}new{% endif %}">
+    <form
+        hx-post="{% if room %}{% url 'edit_room_form' room.id %}{% else %}{% url 'edit_room_form' 0 %}{% endif %}"
+        hx-target="#room-row-{% if room %}{{ room.id }}{% else %}new{% endif %}"
+        hx-swap="outerHTML"
+    >
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <button type="button"
+                hx-get=""
+                hx-target="#room-add"
+                hx-swap="innerHTML"
+        >Cancel</button>
+    </form>
+</li>
+{% endcomment %}
+
+
+
+<form
+    hx-post="{% if room %}{% url 'edit_room_form' room.id %}{% else %}{% url 'edit_room_form' 0 %}{% endif %}"
+    hx-target="{% if room %}#room-row-{{ room.id }}{% else %}#room-list{% endif %}"
+    hx-swap="{% if room %}outerHTML{% else %}beforeend{% endif %}"
+    hx-on="htmx:afterRequest: if (!{{ room|default:'false' }}) { document.getElementById('room-add').innerHTML = ''; }"
+>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+    <button type="button"
+            hx-get=""
+            hx-target="#room-add"
+            hx-swap="innerHTML"
+    >Cancel</button>
+</form>
+

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Venue: {{ venue.name }}</h1>
+
+    <ul id="room-list">
+        {% for room in venue.room_set.all %}
+            {% include "partials/show_room.html" %}
+        {% empty %}
+            <li id="no-rooms"><i>No rooms for this venue</i></li>
+        {% endfor %}
+    </ul>
+
+    <div id="room-add"></div>
+
+    <a
+        hx-get="{% url 'edit_room_form' 0 %}"
+        hx-target="#room-add"
+        hx-swap="innerHTML"
+        style="cursor: pointer; text-decoration:underline"
+    > (Add) </a>
+{% endblock %}

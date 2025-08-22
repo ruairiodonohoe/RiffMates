@@ -23,4 +23,13 @@ urlpatterns = [
         views.edit_musician,
         name="edit_musician",
     ),
+    path("search-musicians/", views.search_musicians, name="search_musicians"),
+    path("room-editor/<int:venue_id>/", views.room_editor, name="room_editor"),
+    path("edit-room-form/<int:room_id>", views.edit_room_form, name="edit_room_form"),
+    path(
+        "show-room-partial/<int:room_id>",
+        views.show_room_partial,
+        name="show_room_partial",
+    ),
+    path("delete-room/<int:room_id>", views.delete_room, name="delete_room"),
 ]

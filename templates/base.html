@@ -14,8 +14,22 @@
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
         crossorigin="anonymous">
     <script src="https://unpkg.com/htmx.org@1.9.8"></script>
+    <!-- usually in base.html -->
+    <<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener('htmx:configRequest', (event) => {
+                const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                event.detail.headers['X-CSRFToken'] = token;
+            });
+        });
+    </script>
+
+
 </head>
 <body class="bg-light">
+    <form style="display:none;">
+        {% csrf_token %}
+    </form>
     <div class="container mt-3 d-flex justify-content-end">
         <a href="{% url 'home' %}">Home</a>&nbsp;&nbsp;
         {% if user.is_authenticated %}

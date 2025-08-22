@@ -1,0 +1,16 @@
+<li id="room-row-{{ room.id }}">
+    {{ room.name }} &nbsp;&nbsp;
+    <a
+        hx-get="{% url 'edit_room_form' room.id %}"
+        hx-target="#room-row-{{room.id}}"
+        style="cursor: pointer; text-decoration:underline"
+        >(Edit)</a> <!-- move space OUTSIDE -->
+        <span> | </span>
+    <a
+        hx-delete="{% url 'delete_room' room.id %}"
+        hx-target="#room-row-{{ room.id }}"
+        hx-swap="outerHTML"
+        hx-confirm="Are you sure you want to delete this room?"
+        style="color:red; cursor:pointer; text-decoration:underline"
+        >Delete</a>
+</li>
