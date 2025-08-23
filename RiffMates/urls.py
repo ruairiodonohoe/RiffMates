@@ -19,6 +19,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic.base import RedirectView
 
 from ninja import NinjaAPI
 
@@ -32,13 +33,16 @@ api.add_router("/promoters/", promoters_router)
 api.add_router("/bands/", bands_router)
 
 urlpatterns = [
+    path("grappelli/", include("grappelli.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("favicon.ico", RedirectView.as_view(url="/static/img/favicon.ico")),
     path("", include("home.urls")),
     path("bands/", include("bands.urls")),
     path("content/", include("content.urls")),
     path("api/v1/", api.urls),
     path("promoters/", include("promoters.urls")),
+    path("__debug__/", include("debug_toolbar.urls")),
 ]
 
 if settings.DEBUG:

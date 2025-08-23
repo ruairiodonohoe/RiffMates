@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "grappelli",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -41,6 +42,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 3RD PARTY
     "django_htmx",
+    "debug_toolbar",
+    "django_extensions",
+    "awl",
+    "crispy_forms",
+    "crispy_bootstrap5",
+    "waffle",
+    "django_distill",
     # LOCAL,
     "home",
     "bands",
@@ -50,14 +58,17 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "waffle.middleware.WaffleMiddleware",
 ]
+
 
 ROOT_URLCONF = "RiffMates.urls"
 
@@ -150,3 +161,14 @@ MEDIA_URL = "/media/"
 
 # API CONFIG
 NINJA_API_KEY = config("NINJA_API_KEY")
+
+
+# DEBUG CONFIG
+INTERNAL_IPS = [
+    "127.0.0.1",  # localhost (IPv4)
+    "localhost",  # optional
+]
+
+# CRISPY CONFIG
+CRISPY_ALLOWED_TEMPLATE_PAKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
